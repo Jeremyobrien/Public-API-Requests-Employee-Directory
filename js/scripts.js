@@ -12,7 +12,6 @@ function fetchData(url) {
 }
 
 fetchData('https://randomuser.me/api/?results=12&inc=name,location,email,picture,cell')
-    .then(res => console.log(res))
     .then(res => {
         const employeeInfo = res.results;
        return generateCards(employeeInfo);
