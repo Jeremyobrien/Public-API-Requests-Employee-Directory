@@ -75,18 +75,61 @@ fetchData(employeeDataUrl)
     .then(generateCards)
     .catch(error => console.log(Error(error)))
 
-
+//listens for clicks to generate modal
  const collectionOfCards = directoryPage.children;
     directoryPage.addEventListener('click', (e) => {       
         if(e.target !== directoryPage){
-            const employee = e.target.closest('.card');
+            const employeeCard = e.target.closest('.card');
             for(let i = 0; i < collectionOfCards.length; i++){
-                if (collectionOfCards[i] === employee){
-                    return generateModal(employeeInfo[i]);
+                if (collectionOfCards[i] === employeeCard){
+                    const employeeName = collectionOfCards[i].children[1].firstElementChild.textContent;
+                    employeeInfo.filter(employee => {
+                        if (employeeName.toLowerCase() === `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`){
+                            return generateModal(employee);
+                        }
+                    })
+                    
                 }
             }    
         }
 
    })
                   
-            
+const searchBar =  document.querySelector('#search-input');
+const searchButton = document.querySelector('#search-submit');
+//Shows filtered search results from student dataset or error message according to search input
+const searchFunction = (searchInput, list) => {
+   let filteredList = [];
+   //loops through dataset and pushes potential search matches to 'filteredList'
+   for (let i = 0; i < list.length; i++) {
+     let employee = list[i];
+      searchInput = searchBar.value.toLowerCase();
+     let employeeName = `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`
+         if (searchInput.length !== 0 && employeeName.includes(searchInput)) {
+         filteredList.push(employee);
+       }
+      }
+      directoryPage.innerHTML = '';
+      generateCards(filteredList);
+  
+   //returns error message if there are no matches
+   if (filteredList.length === 0) {
+         directoryPage.innerHTML = '';
+         const errorMessage = '<p class="no-results">Sorry, there are no employees with that name.</p>';
+         directoryPage.insertAdjacentHTML('beforeend', errorMessage);
+       } 
+}
+
+
+//Event listeners that handle search input
+searchBar.addEventListener('keyup', (e)=> {
+   e.preventDefault();
+   searchFunction(e.target.value, employeeInfo);
+});
+
+//handles 'search button' clicks tied to search input field
+searchButton.addEventListener('click', (e)=> {
+   e.preventDefault();
+   searchFunction(searchBar.value, employeeInfo);
+});
+
