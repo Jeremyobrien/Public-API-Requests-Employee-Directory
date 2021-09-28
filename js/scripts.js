@@ -1,13 +1,13 @@
 
 const directoryPage =  document.querySelector('#gallery');
 const employeeDataUrl = 'https://randomuser.me/api/?results=12';
-
+let employeeInfo = '';
 
 
 
 //Fetch functions
 async function fetchData(url) {
-   let employeeInfo = await fetch(url)
+   employeeInfo = await fetch(url)
                                 .then(checkStatus)
                                 .then(res => res.json())
                                 .catch(error => console.log(Error(error)))
@@ -43,6 +43,9 @@ return directoryPage.insertAdjacentHTML('beforeend', cards);
 };
 
 function generateModal(employee) {
+    let day = new Date(employee.dob.date).getDay();
+    let month = new Date(employee.dob.date).getMonth();
+    let year = new Date(employee.dob.date).getFullYear();
     const modal =`<div class="modal-container">
                     <div class="modal">
                         <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
@@ -53,8 +56,8 @@ function generateModal(employee) {
                             <p class="modal-text cap">${employee.location.city}</p>
                             <hr>
                             <p class="modal-text">${employee.cell}</p>
-                            <p class="modal-text">${employee.street.number} ${employee.street.name}, ${employee.street.city}, ${employee.state} ${employee.postcode}</p>
-                            <p class="modal-text">Birthday: ${employee.dob.date}</p>
+                            <p class="modal-text">${employee.location.street.number} ${employee.location.street.name}, ${employee.location.street.city}, ${employee.location.state} ${employee.location.postcode}</p>
+                            <p class="modal-text">Birthday: ${month}/${day}/${year}</p>
                         </div>
                     </div>
 
@@ -65,22 +68,25 @@ function generateModal(employee) {
                     </div>
                 </div>`;
             
-     return modal;  
+     directoryPage.insertAdjacentHTML('afterend', modal) 
     }
 
 fetchData(employeeDataUrl)                        
     .then(generateCards)
     .catch(error => console.log(Error(error)))
 
-//Event listeners
 
-    directoryPage.addEventListener('click', async (e) => {
-        const cards = directoryPage.children;
-        const employee = e.target;
-        for(let i = 1; i < cards.length; i++) {
-            if (employee.classList.contains('card') && cards[i] === employee){
-                const popup  = await generateModal(employee);
-                popup.style.display = 'block';
-            }
-    }
-})
+ const collectionOfCards = directoryPage.children;
+    directoryPage.addEventListener('click', (e) => {       
+        if(e.target !== directoryPage){
+            const employee = e.target.closest('.card');
+            for(let i = 0; i < collectionOfCards.length; i++){
+                if (collectionOfCards[i] === employee){
+                    return generateModal(employeeInfo[i]);
+                }
+            }    
+        }
+
+   })
+                  
+            
