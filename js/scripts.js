@@ -1,9 +1,11 @@
-
+//Variables
 const directoryPage =  document.querySelector('#gallery');
-const employeeDataUrl = 'https://randomuser.me/api/?results=12';
+const employeeDataUrl = 'https://randomuser.me/api/?nat=us&results=12';
 let employeeInfo = '';
-
-
+const modalContainer = document.querySelector('.modal-container');
+const collectionOfCards = directoryPage.children;
+const searchBar =  document.querySelector('#search-input');
+const searchButton = document.querySelector('#search-submit');
 
 //Fetch functions
 async function fetchData(url) {
@@ -14,9 +16,17 @@ async function fetchData(url) {
     employeeInfo = employeeInfo.results;
     return employeeInfo;
 }
-    
+
+//Function call to get 'employeeInfo'
+fetchData(employeeDataUrl) 
+    .then(modalContainer.style.display = 'none')                       
+    .then(generateHTML)
+    .catch(error => console.log(Error(error)))
+
 
 //Helper Functions
+
+//Checks status of fetch request
 function checkStatus(response){
     if (response.ok){
         return Promise.resolve(response);
@@ -25,7 +35,8 @@ function checkStatus(response){
     }
 }
 
-function generateCards (arr) {
+//Generates employee cards for directory
+function generateHTML (arr) {
     const cards = arr.map(card => ` 
     <div class="card">
     <div class="card-img-container">
@@ -42,12 +53,13 @@ function generateCards (arr) {
 return directoryPage.insertAdjacentHTML('beforeend', cards); 
 };
 
+//Generates modal window
 function generateModal(employee) {
     let day = new Date(employee.dob.date).getDay();
     let month = new Date(employee.dob.date).getMonth();
     let year = new Date(employee.dob.date).getFullYear();
-    const modal =`<div class="modal-container">
-                    <div class="modal">
+    let modal = `
+                 <div class="modal">
                         <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
                         <div class="modal-info-container">
                             <img class="modal-img" src="${employee.picture.large}" alt="profile picture">
@@ -56,7 +68,7 @@ function generateModal(employee) {
                             <p class="modal-text cap">${employee.location.city}</p>
                             <hr>
                             <p class="modal-text">${employee.cell}</p>
-                            <p class="modal-text">${employee.location.street.number} ${employee.location.street.name}, ${employee.location.street.city}, ${employee.location.state} ${employee.location.postcode}</p>
+                            <p class="modal-text">${employee.location.street.number} ${employee.location.street.name}, ${employee.location.city}, ${employee.location.state} ${employee.location.postcode}</p>
                             <p class="modal-text">Birthday: ${month}/${day}/${year}</p>
                         </div>
                     </div>
@@ -68,36 +80,30 @@ function generateModal(employee) {
                     </div>
                 </div>`;
             
-     directoryPage.insertAdjacentHTML('afterend', modal) 
+     modalContainer.insertAdjacentHTML('beforeend', modal) 
+     modalContainer.style.display = 'block';
     }
 
-fetchData(employeeDataUrl)                        
-    .then(generateCards)
-    .catch(error => console.log(Error(error)))
 
-//listens for clicks to generate modal
- const collectionOfCards = directoryPage.children;
-    directoryPage.addEventListener('click', (e) => {       
-        if(e.target !== directoryPage){
-            const employeeCard = e.target.closest('.card');
-            for(let i = 0; i < collectionOfCards.length; i++){
-                if (collectionOfCards[i] === employeeCard){
-                    const employeeName = collectionOfCards[i].children[1].firstElementChild.textContent;
-                    employeeInfo.filter(employee => {
-                        if (employeeName.toLowerCase() === `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`){
-                            return generateModal(employee);
-                        }
-                    })
-                    
+
+//listens for clicks on filtered search results to generate modal
+ const getModal = (employee)=> { 
+     for(let i = 0; i < collectionOfCards.length; i++){
+        if (collectionOfCards[i] === employee){
+            const employeeName = collectionOfCards[i].children[1].firstElementChild.textContent;
+            employeeInfo.filter(employee => {
+                if (employeeName.toLowerCase() === `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`){
+                    generateModal(employee);
                 }
-            }    
-        }
-
-   })
+            })
+            
+         }
+    } 
+ }   
+ 
                   
-const searchBar =  document.querySelector('#search-input');
-const searchButton = document.querySelector('#search-submit');
-//Shows filtered search results from student dataset or error message according to search input
+
+//Shows filtered search results from employee directory or error message according to search input
 const searchFunction = (searchInput, list) => {
    let filteredList = [];
    //loops through dataset and pushes potential search matches to 'filteredList'
@@ -110,18 +116,20 @@ const searchFunction = (searchInput, list) => {
        }
       }
       directoryPage.innerHTML = '';
-      generateCards(filteredList);
+      generateHTML(filteredList);
   
    //returns error message if there are no matches
    if (filteredList.length === 0) {
          directoryPage.innerHTML = '';
-         const errorMessage = '<p class="no-results">Sorry, there are no employees with that name.</p>';
+         const errorMessage = '<h2>Sorry, there are no employees with that name.</h2>';
          directoryPage.insertAdjacentHTML('beforeend', errorMessage);
        } 
 }
 
 
-//Event listeners that handle search input
+//Event listeners 
+
+//Handles search input
 searchBar.addEventListener('keyup', (e)=> {
    e.preventDefault();
    searchFunction(e.target.value, employeeInfo);
@@ -133,3 +141,45 @@ searchButton.addEventListener('click', (e)=> {
    searchFunction(searchBar.value, employeeInfo);
 });
 
+//listens for card clicks to display modal
+directoryPage.addEventListener('click', (e) => {       
+    if(e.target !== directoryPage){
+        modalContainer.innerHTML = '';
+        const employeeCard = e.target.closest('.card');
+        getModal(employeeCard)          
+    }
+})
+
+//listens for modal button clicks
+modalContainer.addEventListener('click', (e)=>{
+    const closeButton = document.querySelector('#modal-close-btn');
+    const prevButton =  document.querySelector('#modal-prev');
+    const nextButton = document.querySelector('#modal-next');
+    const selection = e.target;
+    const currentModal = document.querySelector('.modal-name').textContent.toLowerCase();
+    if(selection.tagName === "STRONG" || selection === closeButton){
+        modalContainer.style.display = 'none';
+        } 
+    else if (selection === prevButton){
+        employeeInfo.forEach( employee => {
+            if(`${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}` === currentModal){
+                const currentEmployee = employeeInfo.indexOf(employee);
+                if (currentEmployee > 0){
+                    modalContainer.innerHTML ='';
+                    generateModal(employeeInfo[(currentEmployee - 1)])
+                }   
+            }
+        })
+    }
+    else if (selection === nextButton){       
+        employeeInfo.forEach( employee => {
+            if(`${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}` === currentModal){
+                const currentEmployee = employeeInfo.indexOf(employee);
+                if (currentEmployee < collectionOfCards.length - 1){
+                    modalContainer.innerHTML ='';
+                    generateModal(employeeInfo[(currentEmployee + 1)])
+                }   
+            }
+        })
+    }
+})
