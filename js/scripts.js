@@ -6,6 +6,7 @@ const modalContainer = document.querySelector('.modal-container');
 const collectionOfCards = directoryPage.children;
 const searchBar =  document.querySelector('#search-input');
 const searchButton = document.querySelector('#search-submit');
+let featuredResults = '';
 
 //Fetch functions
 async function fetchData(url) {
@@ -14,6 +15,7 @@ async function fetchData(url) {
                                 .then(res => res.json())
                                 .catch(error => console.log(Error(error)))
     employeeInfo = employeeInfo.results;
+    featuredResults = employeeInfo;
     return employeeInfo;
 }
 
@@ -27,7 +29,7 @@ fetchData(employeeDataUrl)
 //Helper Functions
 
 //Checks status of fetch request
-function checkStatus(response){
+function checkStatus(response) {
     if (response.ok){
         return Promise.resolve(response);
     } else {
@@ -105,21 +107,21 @@ function generateModal(employee) {
 
 //Shows filtered search results from employee directory or error message according to search input
 const searchFunction = (searchInput, list) => {
-   let filteredList = [];
+    featuredResults = [];
    //loops through dataset and pushes potential search matches to 'filteredList'
    for (let i = 0; i < list.length; i++) {
      let employee = list[i];
       searchInput = searchBar.value.toLowerCase();
      let employeeName = `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`
          if (searchInput.length !== 0 && employeeName.includes(searchInput)) {
-         filteredList.push(employee);
+         featuredResults.push(employee);
        }
       }
       directoryPage.innerHTML = '';
-      generateHTML(filteredList);
+      generateHTML(featuredResults);
   
    //returns error message if there are no matches
-   if (filteredList.length === 0) {
+   if (featuredResults.length === 0) {
          directoryPage.innerHTML = '';
          const errorMessage = '<h2>Sorry, there are no employees with that name.</h2>';
          directoryPage.insertAdjacentHTML('beforeend', errorMessage);
@@ -146,40 +148,79 @@ directoryPage.addEventListener('click', (e) => {
     if(e.target !== directoryPage){
         modalContainer.innerHTML = '';
         const employeeCard = e.target.closest('.card');
-        getModal(employeeCard)          
+        const employeeName = employeeCard.children[1].firstElementChild.textContent.toLowerCase();
+        const firstResult = `${featuredResults[0].name.first.toLowerCase()} ${featuredResults[0].name.last.toLowerCase()}`;
+        const lastResult = `${featuredResults[featuredResults.length -1].name.first.toLowerCase()} ${featuredResults[featuredResults.length - 1].name.last.toLowerCase()}`
+        if( employeeName === firstResult){
+            getModal(employeeCard);
+            const prevButton = document.querySelector('#modal-prev');
+            prevButton.style.display = 'none'
+        } 
+        else if( employeeName === lastResult){
+            getModal(employeeCard);
+            const nextButton = document.querySelector('#modal-next');
+            nextButton.style.display = 'none'
+        } 
+        else {
+            getModal(employeeCard);
+        }         
     }
 })
 
 //listens for modal button clicks
 modalContainer.addEventListener('click', (e)=>{
     const closeButton = document.querySelector('#modal-close-btn');
-    const prevButton =  document.querySelector('#modal-prev');
-    const nextButton = document.querySelector('#modal-next');
+    let prevButton =  document.querySelector('#modal-prev');
+    let nextButton = document.querySelector('#modal-next');
     const selection = e.target;
     const currentModal = document.querySelector('.modal-name').textContent.toLowerCase();
     if(selection.tagName === "STRONG" || selection === closeButton){
         modalContainer.style.display = 'none';
-        } 
-    else if (selection === prevButton){
-        employeeInfo.forEach( employee => {
+    } 
+    else if (selection === prevButton) {       
+        featuredResults.forEach( employee => {
             if(`${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}` === currentModal){
-                const currentEmployee = employeeInfo.indexOf(employee);
-                if (currentEmployee > 0){
+                const currentEmployee = featuredResults.indexOf(employee);
+                if (currentEmployee > 1){
                     modalContainer.innerHTML ='';
-                    generateModal(employeeInfo[(currentEmployee - 1)])
-                }   
-            }
+                     generateModal(featuredResults[(currentEmployee - 1)])
+                    }              
+                 else if (currentEmployee === 1) {
+                    modalContainer.innerHTML ='';
+                    generateModal(featuredResults[(currentEmployee - 1)])
+                    prevButton =  document.querySelector('#modal-prev');
+                    prevButton.style.display = 'none';
+                }
+            }   
         })
     }
-    else if (selection === nextButton){       
-        employeeInfo.forEach( employee => {
+    else if (selection === nextButton){  
+        featuredResults.forEach( employee => {
             if(`${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}` === currentModal){
-                const currentEmployee = employeeInfo.indexOf(employee);
-                if (currentEmployee < collectionOfCards.length - 1){
+                const currentEmployee = featuredResults.indexOf(employee);
+                if (currentEmployee < featuredResults.length - 2){
                     modalContainer.innerHTML ='';
-                    generateModal(employeeInfo[(currentEmployee + 1)])
+                    generateModal(featuredResults[(currentEmployee + 1)])
                 }   
+                else if (currentEmployee === featuredResults.length - 2) {
+                    modalContainer.innerHTML ='';
+                    generateModal(featuredResults[(currentEmployee + 1)])
+                    nextButton =  document.querySelector('#modal-next');
+                    nextButton.style.display = 'none';
+                }
             }
         })
     }
 })
+
+
+
+//   function filteredEmployeeInfo (arr, collection){
+//     for (let i = 0; i < collection.length; i++){
+//             for (let j = 0; j < arr.length; i++){
+//                 const employeeName =  `${.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`;
+//                 if (arr[j].includes())
+//             }
+        
+//     }
+//   }      
