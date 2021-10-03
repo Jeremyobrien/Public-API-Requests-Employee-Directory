@@ -12,7 +12,7 @@ let featuredResults = '';
 //Fetch functions
 async function fetchData(url) {
    employeeInfo = await fetch(url)
-                        .then(res => res.json())
+                         .then(res => res.json())
     employeeInfo = employeeInfo.results;
     featuredResults = employeeInfo;
     return employeeInfo;
@@ -29,19 +29,19 @@ fetchData(employeeDataUrl)
 //Generates employee cards for directory
 function generateHTML (arr) {
     const cards = arr.map(card => ` 
-    <div class="card">
-    <div class="card-img-container">
-        <img class="card-img" src="${card.picture.large}" alt="profile picture">
-    </div>
-    <div class="card-info-container">
-        <h3 id="name" class="card-name cap">${card.name.first} ${card.name.last}</h3>
-        <p class="card-text">${card.email}</p>
-        <p class="card-text cap">${card.location.city}, ${card.location.state}</p>
-    </div>
-</div>
-</div>
-`).join('');
-return directoryPage.insertAdjacentHTML('beforeend', cards); 
+        <div class="card">
+        <div class="card-img-container">
+            <img class="card-img" src="${card.picture.large}" alt="profile picture">
+        </div>
+        <div class="card-info-container">
+            <h3 id="name" class="card-name cap">${card.name.first} ${card.name.last}</h3>
+            <p class="card-text">${card.email}</p>
+            <p class="card-text cap">${card.location.city}, ${card.location.state}</p>
+        </div>
+        </div>
+        </div>
+    `).join('');
+    return directoryPage.insertAdjacentHTML('beforeend', cards); 
 };
 
 //Generates modal window
@@ -82,6 +82,14 @@ function generateModal(employee) {
      for(let i = 0; i < collectionOfCards.length; i++){
         if (collectionOfCards[i] === employee){
             const employeeName = collectionOfCards[i].children[1].firstElementChild.textContent;
+            if (featuredResults.length === 0){
+                employeeInfo.filter(employee => {
+                    if (employeeName.toLowerCase() === `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`) { 
+                            generateModal(employee);
+                        }                                 
+                    })         
+          }
+          else {
             featuredResults.filter(employee => {
                 if (employeeName.toLowerCase() === `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`) {  
                     if (featuredResults.length === 1){
@@ -94,34 +102,97 @@ function generateModal(employee) {
                 }
             })           
          }
-    } 
- }                   
+     } 
+  }
+}                   
 
 //Shows filtered search results from employee directory or error message according to search input
 const searchFunction = (searchInput, list) => {
     featuredResults = [];
-   //loops through dataset and pushes potential search matches to 'filteredList'
-   for (let i = 0; i < list.length; i++) {
-     let employee = list[i];
-      searchInput = searchBar.value.toLowerCase();
-     let employeeName = `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`
-         if (searchInput.length !== 0 && employeeName.includes(searchInput)) {
-         featuredResults.push(employee);
-       }
-      }
-      directoryPage.innerHTML = '';
-      generateHTML(featuredResults);
-  
-   //returns error message if there are no matches
-   if (searchInput.length > 0 && featuredResults.length === 0) {
-         directoryPage.innerHTML = '';
-         const errorMessage = '<h2>Sorry, there are no employees with that name.</h2>';
-         directoryPage.insertAdjacentHTML('beforeend', errorMessage);
-       } else if (searchInput.length === 0 && featuredResults.length === 0){
-           generateHTML(list);
-       }
+   //loops through dataset and pushes potential search matches to 'featuredResults'
+    for (let i = 0; i < list.length; i++) {
+        let employee = list[i];
+        searchInput = searchBar.value.toLowerCase();
+        let employeeName = `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`
+            if (searchInput.length !== 0 && employeeName.includes(searchInput)) {
+            featuredResults.push(employee);
+            }
+        }
+        directoryPage.innerHTML = '';
+        generateHTML(featuredResults);
+    
+    //returns error message if there are no matches
+    if (searchInput.length > 0 && featuredResults.length === 0) {
+            directoryPage.innerHTML = '';
+            const errorMessage = '<h2>Sorry, there are no employees with that name.</h2>';
+            directoryPage.insertAdjacentHTML('beforeend', errorMessage);
+        } 
+        else if (searchInput.length === 0 && featuredResults.length === 0){
+            generateHTML(list);
+        }
 }
 
+//Handles 'PREV' button clicks
+const prevButtonAction = (arr) => {
+    const currentModal = document.querySelector('.modal-name').textContent.toLowerCase();
+    arr.forEach( employee => {
+    if(`${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}` === currentModal) {
+        const currentEmployee = arr.indexOf(employee);
+        if (currentEmployee > 1){
+            modalContainer.innerHTML ='';
+            generateModal(arr[(currentEmployee - 1)])
+            }              
+         else if (currentEmployee === 1) {
+            modalContainer.innerHTML ='';
+            generateModal(arr[(currentEmployee - 1)])
+            prevButton =  document.querySelector('#modal-prev');
+            prevButton.style.display = 'none';
+            }
+        }   
+    })
+}
+
+//Handles 'NEXT' button clicks
+const nextButtonAction = (arr) => {
+    const currentModal = document.querySelector('.modal-name').textContent.toLowerCase();
+    arr.forEach( employee => {
+        if(`${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}` === currentModal){
+            const currentEmployee = arr.indexOf(employee);
+            if (currentEmployee < arr.length - 2){
+                modalContainer.innerHTML ='';
+                generateModal(arr[(currentEmployee + 1)])
+            }   
+            else if (currentEmployee === arr.length - 2) {
+                modalContainer.innerHTML ='';
+                generateModal(arr[(currentEmployee + 1)])
+                nextButton =  document.querySelector('#modal-next');
+                nextButton.style.display = 'none';
+            }
+        }
+    })
+}
+
+//Handles card clicks
+const handleCardClicks = (arr, e) => {
+    modalContainer.innerHTML = '';
+    const employeeCard = e.target.closest('.card');
+    const employeeName = employeeCard.children[1].firstElementChild.textContent.toLowerCase();
+    const firstResult = `${arr[0].name.first.toLowerCase()} ${arr[0].name.last.toLowerCase()}`;
+    const lastResult = `${arr[arr.length -1].name.first.toLowerCase()} ${arr[arr.length - 1].name.last.toLowerCase()}`;
+    if( employeeName === firstResult){
+        getModal(employeeCard);
+        const prevButton = document.querySelector('#modal-prev');
+        prevButton.style.display = 'none'
+    } 
+    else if( employeeName === lastResult){
+        getModal(employeeCard);
+        const nextButton = document.querySelector('#modal-next');
+        nextButton.style.display = 'none'
+    } 
+    else {
+        getModal(employeeCard);
+    }     
+}  
 
 //Event listeners 
 
@@ -138,72 +209,38 @@ searchButton.addEventListener('click', (e)=> {
 });
 
 //listens for card clicks to display modal
-directoryPage.addEventListener('click', (e) => {       
+directoryPage.addEventListener('click', (e) => {    
     if(e.target !== directoryPage){
-        modalContainer.innerHTML = '';
-        const employeeCard = e.target.closest('.card');
-        const employeeName = employeeCard.children[1].firstElementChild.textContent.toLowerCase();
-        const firstResult = `${featuredResults[0].name.first.toLowerCase()} ${featuredResults[0].name.last.toLowerCase()}`;
-        const lastResult = `${featuredResults[featuredResults.length -1].name.first.toLowerCase()} ${featuredResults[featuredResults.length - 1].name.last.toLowerCase()}`;
-        if( employeeName === firstResult){
-            getModal(employeeCard);
-            const prevButton = document.querySelector('#modal-prev');
-            prevButton.style.display = 'none'
-        } 
-        else if( employeeName === lastResult){
-            getModal(employeeCard);
-            const nextButton = document.querySelector('#modal-next');
-            nextButton.style.display = 'none'
-        } 
-        else {
-            getModal(employeeCard);
-        }         
+        if (featuredResults.length === 0){
+            handleCardClicks(employeeInfo, e);       
+        } else {
+            handleCardClicks(featuredResults, e);
+        }      
     }
 })
 
 //listens for modal button clicks
 modalContainer.addEventListener('click', (e)=>{
     const closeButton = document.querySelector('#modal-close-btn');
-    let prevButton =  document.querySelector('#modal-prev');
-    let nextButton = document.querySelector('#modal-next');
+    const prevButton =  document.querySelector('#modal-prev');
+    const nextButton = document.querySelector('#modal-next');
     const selection = e.target;
-    const currentModal = document.querySelector('.modal-name').textContent.toLowerCase();
     if(selection.tagName === "STRONG" || selection === closeButton){
         modalContainer.style.display = 'none';
     } 
-    else if (selection === prevButton) {       
-        featuredResults.forEach( employee => {
-            if(`${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}` === currentModal){
-                const currentEmployee = featuredResults.indexOf(employee);
-                if (currentEmployee > 1){
-                    modalContainer.innerHTML ='';
-                     generateModal(featuredResults[(currentEmployee - 1)])
-                    }              
-                 else if (currentEmployee === 1) {
-                    modalContainer.innerHTML ='';
-                    generateModal(featuredResults[(currentEmployee - 1)])
-                    prevButton =  document.querySelector('#modal-prev');
-                    prevButton.style.display = 'none';
-                }
-            }   
-        })
+    else if (selection === prevButton) {    
+        if (featuredResults.length === 0) {
+            prevButtonAction(employeeInfo);
+        } else {
+            prevButtonAction(featuredResults);
+        }
     }
-    else if (selection === nextButton){  
-        featuredResults.forEach( employee => {
-            if(`${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}` === currentModal){
-                const currentEmployee = featuredResults.indexOf(employee);
-                if (currentEmployee < featuredResults.length - 2){
-                    modalContainer.innerHTML ='';
-                    generateModal(featuredResults[(currentEmployee + 1)])
-                }   
-                else if (currentEmployee === featuredResults.length - 2) {
-                    modalContainer.innerHTML ='';
-                    generateModal(featuredResults[(currentEmployee + 1)])
-                    nextButton =  document.querySelector('#modal-next');
-                    nextButton.style.display = 'none';
-                }
-            }
-        })
+    else if (selection === nextButton) {  
+        if (featuredResults.length === 0){
+            nextButtonAction(employeeInfo);
+        } else {
+            nextButtonAction(featuredResults);
+        }
     }
 })
-    
+  
