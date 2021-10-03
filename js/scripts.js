@@ -8,12 +8,11 @@ const searchBar =  document.querySelector('#search-input');
 const searchButton = document.querySelector('#search-submit');
 let featuredResults = '';
 
+
 //Fetch functions
 async function fetchData(url) {
    employeeInfo = await fetch(url)
-                                .then(checkStatus)
-                                .then(res => res.json())
-                                .catch(error => console.log(Error(error)))
+                        .then(res => res.json())
     employeeInfo = employeeInfo.results;
     featuredResults = employeeInfo;
     return employeeInfo;
@@ -23,19 +22,9 @@ async function fetchData(url) {
 fetchData(employeeDataUrl) 
     .then(modalContainer.style.display = 'none')                       
     .then(generateHTML)
-    .catch(error => console.log(Error(error)))
 
 
 //Helper Functions
-
-//Checks status of fetch request
-function checkStatus(response) {
-    if (response.ok){
-        return Promise.resolve(response);
-    } else {
-        return Promise.reject(response.statusText);
-    }
-}
 
 //Generates employee cards for directory
 function generateHTML (arr) {
@@ -93,17 +82,20 @@ function generateModal(employee) {
      for(let i = 0; i < collectionOfCards.length; i++){
         if (collectionOfCards[i] === employee){
             const employeeName = collectionOfCards[i].children[1].firstElementChild.textContent;
-            employeeInfo.filter(employee => {
-                if (employeeName.toLowerCase() === `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`){
-                    generateModal(employee);
+            featuredResults.filter(employee => {
+                if (employeeName.toLowerCase() === `${employee.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`) {  
+                    if (featuredResults.length === 1){
+                        generateModal(employee);
+                        const modalButtons = document.querySelector('.modal-btn-container');
+                        modalButtons.style.display = 'none';
+                    } else {
+                        generateModal(employee);
+                    }                                 
                 }
-            })
-            
+            })           
          }
     } 
- }   
- 
-                  
+ }                   
 
 //Shows filtered search results from employee directory or error message according to search input
 const searchFunction = (searchInput, list) => {
@@ -121,11 +113,13 @@ const searchFunction = (searchInput, list) => {
       generateHTML(featuredResults);
   
    //returns error message if there are no matches
-   if (featuredResults.length === 0) {
+   if (searchInput.length > 0 && featuredResults.length === 0) {
          directoryPage.innerHTML = '';
          const errorMessage = '<h2>Sorry, there are no employees with that name.</h2>';
          directoryPage.insertAdjacentHTML('beforeend', errorMessage);
-       } 
+       } else if (searchInput.length === 0 && featuredResults.length === 0){
+           generateHTML(list);
+       }
 }
 
 
@@ -150,7 +144,7 @@ directoryPage.addEventListener('click', (e) => {
         const employeeCard = e.target.closest('.card');
         const employeeName = employeeCard.children[1].firstElementChild.textContent.toLowerCase();
         const firstResult = `${featuredResults[0].name.first.toLowerCase()} ${featuredResults[0].name.last.toLowerCase()}`;
-        const lastResult = `${featuredResults[featuredResults.length -1].name.first.toLowerCase()} ${featuredResults[featuredResults.length - 1].name.last.toLowerCase()}`
+        const lastResult = `${featuredResults[featuredResults.length -1].name.first.toLowerCase()} ${featuredResults[featuredResults.length - 1].name.last.toLowerCase()}`;
         if( employeeName === firstResult){
             getModal(employeeCard);
             const prevButton = document.querySelector('#modal-prev');
@@ -212,15 +206,4 @@ modalContainer.addEventListener('click', (e)=>{
         })
     }
 })
-
-
-
-//   function filteredEmployeeInfo (arr, collection){
-//     for (let i = 0; i < collection.length; i++){
-//             for (let j = 0; j < arr.length; i++){
-//                 const employeeName =  `${.name.first.toLowerCase()} ${employee.name.last.toLowerCase()}`;
-//                 if (arr[j].includes())
-//             }
-        
-//     }
-//   }      
+    
